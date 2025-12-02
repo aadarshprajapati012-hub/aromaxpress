@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AromaXpress Perfume Control</title>
+<style>
+  /* Reset & base */
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Arial', sans-serif; }
+  body { background: linear-gradient(135deg,#e0eafc,#cfdef3); color:#333; text-align:center; min-height:100vh; }
+
+  /* Headings */
+  h1,h2,h3 { margin-bottom:1rem; color:#1a237e; }
+
+  /* Buttons & inputs */
+  button, select, input {
+    padding:0.8rem 1.5rem;
+    margin:0.5rem;
+    border-radius:12px;
+    border:none;
+    cursor:pointer;
+    font-size:1rem;
+    transition:0.3s;
+  }
+  button { background:#1a237e; color:white; box-shadow:0 4px 10px rgba(0,0,0,0.2); }
+  button:hover { background:#3949ab; transform:translateY(-2px); }
+  select,input { border:1px solid #1a237e; background:white; color:#333; }
+
+  /* Page */
+  .page { display:none; flex-direction:column; align-items:center; justify-content:center; padding:2rem; min-height:100vh; transition:all 0.5s ease; }
+  .page.active { display:flex; }
+
+  /* Card */
+  .card { background:white; padding:2rem; border-radius:20px; box-shadow:0 10px 25px rgba(0,0,0,0.15); margin:1rem; width:320px; transition: transform 0.3s; }
+  .card:hover { transform: translateY(-5px); }
+
+  /* Table */
+  table { border-collapse: collapse; width: 90%; margin:1rem auto; border-radius:10px; overflow:hidden; }
+  th,td { border:1px solid #1a237e; padding:12px; }
+  th { background:#1a237e; color:white; }
+
+  /* Paragraphs */
+  p { font-size:1.1rem; margin-bottom:1rem; }
+</style>
+</head>
+<body>
+
+<!-- Page 1: Perfume Class -->
+<div id="page1" class="page active">
+  <h1>AromaXpress</h1>
+  <h2>Select Perfume Class</h2>
+  <div class="card">
+    <button onclick="selectClass('Designer')">Designer Perfumes</button>
+    <button onclick="selectClass('Niche')">Niche Perfumes</button>
+    <button onclick="selectClass('Ultra-Luxury')">Ultra-Luxury / Bespoke</button>
+  </div>
+</div>
+
+<!-- Page 2: Brands -->
+<div id="page2" class="page">
+  <h2 id="classTitle"></h2>
+  <div id="brandContainer" class="card"></div>
+  <p id="brandSelected" style="font-weight:bold; color:#1a237e;"></p>
+  <button onclick="gotoType()">Next</button>
+</div>
+
+<!-- Page 3: Type of Perfume -->
+<div id="page3" class="page">
+  <h2>Select Type of Perfume</h2>
+  <select id="perfumeType">
+    <option value="" disabled selected>Select type</option>
+    <option value="Parfum">Parfum</option>
+    <option value="EDP">Eau de Parfum (EDP)</option>
+    <option value="EDT">Eau de Toilette (EDT)</option>
+    <option value="EDC">Eau de Cologne (EDC)</option>
+    <option value="Eau Fraîche">Eau Fraîche</option>
+  </select>
+  <button onclick="gotoShots()">Next</button>
+</div>
+
+<!-- Page 4: Number of Shots + Table -->
+<div id="page4" class="page">
+  <h2>Number of Shots & Details</h2>
+  <input type="number" id="shots" min="1" placeholder="Enter number of shots">
+  <table>
+    <tr>
+      <th>Concentration</th>
+      <th>Longevity</th>
+      <th>Sillage</th>
+      <th>Price per Shot</th>
+    </tr>
+    <tr>
+      <td id="concentration">-</td>
+      <td id="longevity">-</td>
+      <td id="sillage">-</td>
+      <td id="price">-</td>
+    </tr>
+  </table>
+  <p>Total Price: ₹<span id="totalPrice">0</span></p>
+  <button onclick="gotoSpray()">Next</button>
+</div>
+
+<!-- Page 5: Spray Now -->
+<div id="page5" class="page">
+  <h2>Ready to Spray</h2>
+  <div class="card">
+    <p>Class: <span id="finalClass"></span></p>
+    <p>Brand: <span id="finalBrand"></span></p>
+    <p>Type: <span id="finalType"></span></p>
+    <p>Shots: <span id="finalShots"></span></p>
+    <p>Total Price: ₹<span id="finalPrice"></span></p>
+    <button onclick="sprayNow()">Spray Now..!!</button>
+    <p id="sprayMessage" style="margin-top:1rem; font-weight:bold; color:#1a237e;"></p>
+  </div>
+</div>
+
+<script>
+let perfumeClass='', brand='', type='', pricePerShot=0, numShots=0;
+
+// Perfume data
+const perfumes = {
+  'Designer':['Chanel Bleu','Dior Sauvage','Gucci Guilty','Armani Code'],
+  'Niche':['Creed Aventus','Amouage Reflection','Byredo Gypsy Water','Diptyque Philosykos'],
+  'Ultra-Luxury':['Clive Christian No.1','Roja Parfums Haute Luxe','Maison Francis Kurkdjian','Bond No.9']
+}
+
+// Page1 -> Page2
+function selectClass(c){
+  perfumeClass = c;
+  document.getElementById('classTitle').innerText = `${c} Brands`;
+  let container = document.getElementById('brandContainer');
+  container.innerHTML = '';
+  perfumes[c].forEach(p=>{
+    const btn = document.createElement('button');
+    btn.innerText = p;
+    btn.onclick = ()=>{
+      brand = p;
+      document.getElementById('brandSelected').innerText = `Selected Brand: ${p}`;
+    };
+    container.appendChild(btn);
+  });
+  document.getElementById('page1').classList.remove('active');
+  document.getElementById('page2').classList.add('active');
+}
+
+// Page2 -> Page3
+function gotoType(){
+  if(!brand){ alert('Please select a brand'); return; }
+  document.getElementById('page2').classList.remove('active');
+  document.getElementById('page3').classList.add('active');
+}
+
+// Page3 -> Page4
+function gotoShots(){
+  type = document.getElementById('perfumeType').value;
+  if(!type){ alert('Select perfume type'); return; }
+
+  // Higher prices for premium perfumes
+  if(type=='Parfum') pricePerShot=150;
+  else if(type=='EDP') pricePerShot=120;
+  else if(type=='EDT') pricePerShot=90;
+  else if(type=='EDC') pricePerShot=60;
+  else pricePerShot=40;
+
+  document.getElementById('concentration').innerText = type;
+  document.getElementById('longevity').innerText = (type=='Parfum')?'8+ hrs':(type=='EDP'?'6-8 hrs':type=='EDT'?'4-6 hrs':type=='EDC'?'2-4 hrs':'1-2 hrs');
+  document.getElementById('sillage').innerText = (type=='Parfum')?'Heavy':(type=='EDP'?'Moderate':type=='EDT'?'Light':'Very Light');
+  document.getElementById('price').innerText = pricePerShot;
+
+  document.getElementById('page3').classList.remove('active');
+  document.getElementById('page4').classList.add('active');
+}
+
+// Page4 -> Page5
+function gotoSpray(){
+  numShots = parseInt(document.getElementById('shots').value);
+  if(!numShots || numShots<1){ alert('Enter valid number of shots'); return; }
+  document.getElementById('totalPrice').innerText = numShots*pricePerShot;
+  document.getElementById('finalClass').innerText = perfumeClass;
+  document.getElementById('finalBrand').innerText = brand;
+  document.getElementById('finalType').innerText = type;
+  document.getElementById('finalShots').innerText = numShots;
+  document.getElementById('finalPrice').innerText = numShots*pricePerShot;
+  document.getElementById('page4').classList.remove('active');
+  document.getElementById('page5').classList.add('active');
+}
+
+// Spray action
+function sprayNow(){
+  const msg = `💨 Spraying ${brand} (${type}) perfume for ${numShots} shot(s)! Enjoy!`;
+  document.getElementById('sprayMessage').innerText = msg;
+  alert('Perfume sprayed successfully!');
+}
+</script>
+
+</body>
+</html>
+
